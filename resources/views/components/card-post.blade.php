@@ -43,6 +43,6 @@
           <span class="ml-1 text-gray-500 dark:text-gray-400  font-light">{{ $like }}</span>
         </button>  
       </form>
-      <a href="{{ url('#') }}" class="ml-1 text-gray-500 dark:text-gray-400 font-light">{{ $comment }} comments</a>
+      <livewire:my-post.comment-post :totalComment="$comment" :post_id="$post_id">
       </div>
   </div>
