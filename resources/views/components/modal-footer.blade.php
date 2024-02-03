@@ -1,4 +1,4 @@
-<div class="relative" x-data="{ show: false }" @click.outside="show = false" @close.stop="show = false">
+<div class="relative" x-data="{ show: false }">
     <div @click="show = !show">
         <!-- Trigger modal -->
         {{ $trigger }}

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('post_id');
             $table->text('content');
+            $table->string('image')->nullable();
             $table->integer('like')->default(0);
             $table->timestamps();
         });
