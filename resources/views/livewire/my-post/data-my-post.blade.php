@@ -18,6 +18,12 @@
 ?>
 
 <div class="w-full grid grid-cols-1 justify-center items-center gap-3 min-h-screen px-6 pb-6">
+    @if (count($dataPost) <= 0)      
+        <div class="w-full max-h-full flex justify-center items-center">
+            <h1 class="text-2xl font-semibold text-slate-900">you've never posted</h1>
+        </div>
+    @endif
+
     @foreach ( $dataPost as $key => $data)       
     <div class="w-full mx-auto">
         <x-card-post

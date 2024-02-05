@@ -67,7 +67,6 @@
             ->where('comments.post_id', $this->post_id)
             ->orderBy('comments.created_at', 'desc')
             ->select('users.picture', 'users.name', 'users.id as userId', 'posts.user_id as post_userId', 'comments.*')
-
             ->get();
 
         }

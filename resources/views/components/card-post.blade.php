@@ -37,12 +37,7 @@
           @endif
       @endif
       <div class="flex justify-between items-center mt-5">
-      <form>
-        <button type="submit" class="flex gap-2 cursor-pointer">
-          <i class="fa-regular fa-thumbs-up my-auto text-xl"></i>
-          <span class="ml-1 text-gray-500 dark:text-gray-400  font-light">{{ $like }}</span>
-        </button>  
-      </form>
+      <livewire:my-post.like-post :post_id='$post_id' :user_id='$user_id' :likes='$like' />
       <livewire:my-post.comment-post :totalComment="$comment" :post_id="$post_id">
       </div>
   </div>
