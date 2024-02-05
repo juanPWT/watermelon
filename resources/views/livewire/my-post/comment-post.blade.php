@@ -20,12 +20,43 @@
         // for read
         public $dataComment;
 
+        function commentPost() {
 
-        public function mount($totalComment, $post_id)  {
-            $this->totalComment = $totalComment;
-            $this->post_id = $post_id;
+                $this->validate([
+                    'content' => 'required|string|max:255',
+                    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:1048'
+                ]);
 
-            $this->loadComments();
+                // create comment
+                $data = [
+                    'user_id' => auth()->user()->id,
+                    'post_id' => $this->post_id,
+                    'content' => $this->content,
+                    'image'   => !$this->image ? null : $this->image->getClientOriginalName()   
+                ];
+
+                if (Comment::create($data)) {
+
+                    // update total comment post
+                    $post = Post::find($this->post_id);
+                    $post->comment = $this->totalComment + 1;
+                    $post->save();
+
+                    // store image
+                    if ($this->image) {
+                        $this->image->storeAs('public/resource/post/comment', $this->image->getClientOriginalName());
+                    }
+                    
+                    $this->dispatch('success_comment');
+
+                }else {
+                    $this->dispatch('error_comment');
+                }
+
+
+                $this->reset('content', 'image');
+                $this->loadComments();
+
 
         }
 
@@ -34,49 +65,23 @@
             $this->dataComment = Comment::join('users', 'users.id', '=', 'comments.user_id')
             ->join('posts', 'posts.id', '=', 'comments.post_id')
             ->where('comments.post_id', $this->post_id)
-            ->select('users.picture', 'users.name', 'users.id as userId', 'posts.user_id as post_userId', 'comments.*')->get();
-        
+            ->orderBy('comments.created_at', 'desc')
+            ->select('users.picture', 'users.name', 'users.id as userId', 'posts.user_id as post_userId', 'comments.*')
+
+            ->get();
+
         }
 
+        public function mount($totalComment, $post_id)  {
+            $this->totalComment = $totalComment;
+            $this->post_id = $post_id;
 
-         function commentPost() {
+            $this->dataComment = [];
+        }
 
-            $this->validate([
-                'content' => 'required|string|max:255',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:1048'
-             ]);
-
-            // create comment
-            $data = [
-                'user_id' => auth()->user()->id,
-                'post_id' => $this->post_id,
-                'content' => $this->content,
-                'image'   => !$this->image ? null : $this->image->getClientOriginalName()   
-            ];
-
-            if (Comment::create($data)) {
-
-                // update total comment post
-                $post = Post::find($this->post_id);
-                $post->comment = $this->totalComment + 1;
-                $post->save();
-
-                // store image
-                if ($this->image) {
-                    $this->image->storeAs('public/resource/post/comment', $this->image->getClientOriginalName());
-                }
-                
-                $this->dispatch('success_comment');
-            }else {
-                $this->dispatch('error_comment');
-            }
-            
-            
-            $this->reset('content', 'image');
+        public function updating() {
             $this->loadComments();
-
         }
-
 
     }
 
@@ -90,7 +95,7 @@
     </x-slot>
 
     <x-slot name="trigger">
-      <button class="ml-1 text-gray-500 dark:text-gray-400 font-light">{{ $totalComment }} comments</button>
+      <button wire:click='loadComments' class="ml-1 text-gray-500 dark:text-gray-400 font-light">{{ $totalComment }} comments</button>
     </x-slot>
 
     <x-slot name="header">
@@ -99,34 +104,36 @@
          @error('content')
          <span class="text-xs text-red-500 text-center">{{ $message }}</span>
          @enderror
- 
+         @error('image')
+         <span class="text-xs text-red-500 text-center">{{ $message }}</span>
+         @enderror
     </x-slot>
 
     <x-slot name="content">
-        {{-- comment  --}}
-        <div class="hidden sm:flex sm:flex-col w-full p-2 bg-white">
-            <form wire:submit.prevent='commentPost' class="flex w-full justify-center gap-2">
+        {{-- post comment  --}}
+        <form wire:submit='commentPost' class="flex flex-col w-full p-2 bg-white">
+            <div class="flex w-full justify-center gap-2">
                 <input type="text" wire:model='content' class="w-full rounded-full px-4  text-sm ring-slate-900 focus:ring-red-500">
-                <label for="include-image" class="flex justify-center items-center text-xl cursor-pointer hover:scale-110">
+                <label for="includeImage" class="flex justify-center items-center text-xl cursor-pointer hover:scale-110">
                     <i class="fa-regular fa-image text-gray-500"></i>
                 </label>
+                <x-file-input formatType="image" model='image' name='includeImage' />
                 <button type="submit" class="px-3 py-2 text-2xl hover:bg-gray-100 rounded-full text-slate-900">
                     <i class="fa-regular fa-paper-plane"></i>
                 </button>
-            </form>
+            </div>
 
-            @if ($image)
-            {{-- preview image  --}}
+            @if ($image && $image->temporaryUrl())
             <div class="flex w-full justify-between p-2 ">
                 <span class="text-sm text-slate-600">{{ $image->getClientOriginalName() }}</span>
                 <img src="{{ $image->temporaryUrl() }}" alt="preview-image" class="w-10 h-10 rounded-md object-cover">
             </div>
             @endif
 
-        </div>
+        </form>
 
         {{-- content comment  --}}
-        <div class="px-4 pt-4 pb-44 sm:pb-20 grid grid-cols-1 gap-3 bg-white h-full overflow-y-scroll">
+        <div class="px-4 pt-4 pb-44 sm:pb-20 grid grid-cols-1 gap-5 bg-white h-full overflow-y-scroll">
             {{-- if dataComment 0  --}}
             @if (count($dataComment) <= 0 )
                 <div class="w-full min-h-full flex flex-col gap-3 justify-center items-center">
@@ -159,29 +166,10 @@
             like="{{ $data['like'] }}"
             image="{{ $data['image'] }}"
             /> 
+            <hr class="w-full text-slate-500">
                 
             @endforeach
         </div>
 
-        {{-- responsive form --}}
-        <div class="fixed bottom-0 sm:hidden w-full bg-white  p-4">
-            @if ($image)
-            {{-- preview image  --}}
-            <div class="flex w-full justify-between p-2 ">
-                <span class="text-sm text-slate-600">{{ $image->getClientOriginalName() }}</span>
-                <img src="{{ $image->temporaryUrl() }}" alt="preview-image" class="w-10 h-10 rounded-md object-cover">
-            </div>
-            @endif
-            <form wire:submit.prevent='commentPost' class="flex w-full justify-center gap-2">
-                <input type="text" wire:model='content' class="w-full rounded-full px-4  text-sm ring-slate-900 focus:ring-red-500">
-                <label for="include-image" class="flex justify-center items-center text-xl cursor-pointer hover:scale-110">
-                    <i class="fa-regular fa-image text-gray-500"></i>
-                    <input type="file" accept="image/*" id="include-image" wire:model='image' class="hidden">
-                </label>
-                <button type="submit" class="px-3 py-2 text-2xl hover:bg-gray-100 rounded-full text-slate-900">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </button>
-            </form>
-        </div>
     </x-slot>
   </x-modal-footer>

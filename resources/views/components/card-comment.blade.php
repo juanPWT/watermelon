@@ -9,7 +9,7 @@
    <div class="w-full flex  gap-3">
     {{-- start --}}
     <div class="flex justify-center ">
-          <img src="{{ url('storage/image/user/' . $picture) }}" default="{{ url('storage/image/user/default.png') }}" alt="user" class="w-14 h-12 sm:w-[55px] sm:h-[50px] rounded-full object-cover'">
+          <img src="{{ url('storage/image/user/' . $picture) }}"  alt="user" class="w-14 h-12 sm:w-[55px] sm:h-[50px] rounded-full object-cover'">
     </div>
     <div class="flex flex-col gap-2 justify-start w-full">
           <div class="flex gap-1 items-center">

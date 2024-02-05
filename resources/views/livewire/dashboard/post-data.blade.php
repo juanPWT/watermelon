@@ -78,7 +78,7 @@ new class extends Component {
         <button  x-on:click.prevent="$dispatch('open-modal', 'post-news-palestine')"  class="bg-slate-900 text-white py-3 px-7 rounded-r-full"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
     <x-modal name="post-news-palestine" :show="$errors->isNotEmpty()" focusable>
-        <form wire:submit.prevent='postNews' class="bg-white p-5 flex flex-col">
+        <form wire:submit='postNews' class="bg-white p-5 flex flex-col">
             <div class="w-full">
                 <x-input-label for="content" :value="__('Content')" />
                 <x-textarea-input wire:model='content' id="content" name="content" rows="5" class="mt-1 block w-full" required autofocus autocomplete="caption" />
@@ -104,6 +104,16 @@ new class extends Component {
                 {{ __('sorry not support 2 file in 1 post (in development)') }}
             </x-action-error-message>
 
+            @error('image')
+                <div class="text-red-500 mt-2 text-sm">
+                    {{ $message }}
+                </div>
+            @enderror
+            @error('video')
+                <div class="text-red-500 mt-2 text-sm">
+                    {{ $message }}
+                </div>
+            @enderror
             <div class="my-2 w-full">
                 @if ($image)   
                     <x-preview-file-input formatType="image" :src="$image->temporaryUrl()" />
